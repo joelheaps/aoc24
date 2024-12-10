@@ -1,0 +1,132 @@
+<!-- livebook:{"file_entries":[{"name":"day6_example.txt","type":"attachment"},{"name":"day6_input.txt","type":"attachment"},{"name":"day7-ex.txt","type":"attachment"},{"name":"day7-in.txt","type":"attachment"},{"name":"day8-ex.txt","type":"attachment"},{"name":"day8-in.txt","type":"attachment"}]} -->
+
+# Day 9
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.14.2"},
+  {:kino_aoc, "~> 0.1.7"}
+])
+```
+
+## Part 1
+
+```elixir
+{:ok, input} = 
+  KinoAOC.download_puzzle("2024", "9", System.fetch_env!("LB_AOC_SESSION"))
+
+input = "2333133121414131402" 
+  
+input = input |> String.graphemes() |> Enum.map(&String.to_integer/1)
+```
+
+```elixir
+defmodule Part1 do
+  def decompress(dense_format, type, counter \\ 0, acc \\ [])
+  def decompress([], _, _, acc), do: Enum.reverse(acc)
+  def decompress([count | rest], :file, file_number, acc) do
+    decompress(rest, :free, file_number + 1, prepend(acc, file_number, count))
+  end
+  def decompress([count | rest], :free, file_number, acc) do
+    decompress(rest, :file, file_number, prepend(acc, ".", count))
+  end
+
+  def fill(left, right, acc \\ [])
+
+  def fill(left = ["." | _], ["." | r_rest], acc), do: fill(left, r_rest, acc)
+  def fill([match | l_rest], [match | r_rest], acc) when match != "." do
+    fill(l_rest, r_rest, [match | acc], :match)
+  end
+
+  def fill(["." | l_rest], [right | r_rest], acc) do
+    fill(l_rest, r_rest, [right | acc])
+  end
+  
+  def fill(left, ["." | r_rest], acc) do
+    fill(left, r_rest, acc)
+  end
+  
+  def fill([left | l_rest], r_rest, acc) when left != "." do
+    fill(l_rest, r_rest, [left | acc])
+  end
+
+  def fill([match | l_rest], [match | r_rest], acc, :match) when match != "." do
+    fill(l_rest, r_rest, [match | acc], :match)
+  end
+  def fill(_, _, acc, :match), do: acc
+
+  def prepend(list, value, until, count \\ 0)
+  def prepend(list, value, until, count) when count < until do
+    prepend([value | list], value, until, count + 1)
+  end
+  def prepend(list, _, _, _), do: list
+end
+
+decomp = Part1.decompress(input, :file)
+fill = Part1.fill(decomp, Enum.reverse(decomp)) |> Enum.reverse()
+sum = fill 
+  |> Enum.with_index()
+  |> Enum.reduce(0, fn {x, y}, acc -> x * y + acc end)
+```
+
+## Part 2
+
+```elixir
+defmodule Part2 do
+  def decompress(dense_format, type, counter \\ 0, acc \\ [])
+  def decompress([], _, _, acc), do: Enum.reverse(acc)
+  def decompress([count | rest], :file, file_number, acc) do
+    decompress(rest, :free, file_number + 1, prepend(acc, file_number, count))
+  end
+  def decompress([count | rest], :free, file_number, acc) do
+    decompress(rest, :file, file_number, prepend(acc, ".", count))
+  end
+
+  def fill(left, right, acc \\ [])
+
+  def fill(left = ["." | _], ["." | r_rest], acc), do: fill(left, r_rest, acc)
+  def fill([match | l_rest], [match | r_rest], acc) when match != "." do
+    fill(l_rest, r_rest, [match | acc], :match)
+  end
+
+  def fill(lfull = ["." | l_rest], rfull = [right | r_rest], acc) do
+    if count(lfull) >= count(rfull) do
+      fill(l_rest, r_rest, [right | acc])
+    else
+      fill(lfull, r_rest, acc)
+    end
+  end
+  
+  def fill(left, ["." | r_rest], acc) do
+    fill(left, r_rest, acc)
+  end
+  
+  def fill([left | l_rest], r_rest, acc) when left != "." do
+    fill(l_rest, r_rest, [left | acc])
+  end
+
+  def fill([match | l_rest], [match | r_rest], acc, :match) when match != "." do
+    fill(l_rest, r_rest, [match | acc], :match)
+  end
+  def fill(_, _, acc, :match), do: acc
+
+  # Counts first value
+  def count([value | rest]), do: count(rest, value, 1)
+  def count([value | rest], value, count), do: count(rest, value, count + 1)
+  def count(_, value, count) do
+    IO.inspect({value, count})
+    count
+  end
+
+  def prepend(list, value, until, count \\ 0)
+  def prepend(list, value, until, count) when count < until do
+    prepend([value | list], value, until, count + 1)
+  end
+  def prepend(list, _, _, _), do: list
+end
+
+result = decomp 
+  |> Part2.fill(Enum.reverse(decomp)) |> Enum.reverse()
+```
+
+<!-- livebook:{"offset":3935,"stamp":{"token":"XCP.PM645U43AA1PbBmmZyOhkUaqqST0pEAG650eJzIMqa3qps8oB2UQ5Yv-b79YkXjnMK3lHoZbYIlDeRd7VhrsuGbO4ficda8MDeTV4vwzypMOnC74o-I","version":2}} -->
