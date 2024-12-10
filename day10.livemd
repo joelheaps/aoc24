@@ -1,0 +1,78 @@
+<!-- livebook:{"file_entries":[{"name":"day6_example.txt","type":"attachment"},{"name":"day6_input.txt","type":"attachment"},{"name":"day7-ex.txt","type":"attachment"},{"name":"day7-in.txt","type":"attachment"},{"name":"day8-ex.txt","type":"attachment"},{"name":"day8-in.txt","type":"attachment"}]} -->
+
+# Day 10
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.14.2"},
+  {:kino_aoc, "~> 0.1.7"}
+])
+```
+
+## Part 1
+
+```elixir
+{:ok, input} = 
+  KinoAOC.download_puzzle("2024", "10", System.fetch_env!("LB_AOC_SESSION"))
+  
+input = input
+  |> String.trim() |> String.split("\n")
+  |> Enum.map(fn l -> String.graphemes(l) |> Enum.map(&String.to_integer/1)end)
+
+grid = for {row, i} <- Enum.with_index(input) do
+  for {col, j} <- Enum.with_index(row) do
+    {{i, j}, col}
+  end
+end |> List.flatten() |> Enum.into(%{})
+```
+
+```elixir
+defmodule Part1 do
+  def get_neighbors(grid, {x, y}) do
+    [{x + 1, y}, {x - 1, y}, {x, y + 1}, {x, y - 1}]
+    |> Enum.reduce([], fn loc, acc -> 
+      val = Map.get(grid, loc)
+      if val != nil, do: [{loc, val} | acc], else: acc
+    end)
+  end
+
+  def walk(grid, loc, elev, found \\ MapSet.new())
+  def walk(_, loc, 9, found), do: MapSet.put(found, loc)
+  def walk(grid, loc, elev, found) do
+    get_neighbors(grid, loc) |> Enum.reduce(found, fn {nloc, nelev}, acc ->
+      found_ = if nelev == elev + 1, do: walk(grid, nloc, nelev, acc), else: MapSet.new()
+      MapSet.union(acc, found_)
+    end)
+  end
+end
+
+result = Enum.into(grid, []) |> Enum.filter(fn {_, v} -> v == 0 end)
+  |> Enum.map(fn {loc, elev} ->
+    Part1.walk(grid, loc, elev) |> Enum.into([]) |> Enum.count()
+  end)
+  |> Enum.sum()
+
+```
+
+## Part 2
+
+```elixir
+defmodule Part2 do
+  import Part1, only: [get_neighbors: 2]
+
+  def walk(_, _, 9), do: 1
+  def walk(grid, loc, elev) do
+    get_neighbors(grid, loc) |> Enum.reduce(0, fn {nloc, nelev}, acc ->
+      acc + if nelev == elev + 1, do: walk(grid, nloc, nelev), else: 0
+    end)
+  end
+end
+
+result = Enum.into(grid, []) |> Enum.filter(fn {_, v} -> v == 0 end)
+  |> Enum.map(fn {loc, elev} ->
+    Part2.walk(grid, loc, elev)
+  end)
+  |> Enum.sum()
+```
+
+<!-- livebook:{"offset":2091,"stamp":{"token":"XCP.ancFdgG4zLDgtK_sF3g5ZGbPavVLoDXqN2O7vNX6Tv6rkezZmvxx2zDkciotUbiMcs6u8vLmcJ2TTLY5V0pAb4skVQxbByoAhcWrL54XbHH5bkGVkNQ","version":2}} -->
